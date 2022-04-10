@@ -10,7 +10,7 @@
 #pragma config CP = OFF // disable code protect
 
 // DEVCFG1
-#pragma config FNOSC = FRC // use fast frc oscillator with pll
+#pragma config FNOSC = FRCPLL // use fast frc oscillator with pll
 #pragma config FSOSCEN = OFF // disable secondary oscillator
 #pragma config IESO = OFF // disable switching clocks
 #pragma config POSCMOD = OFF // primary osc disabled
@@ -50,6 +50,7 @@ int main() {
 
     // do your TRIS and LAT commands here
     TRISAbits.TRISA4 = 0;
+    LATAbits.LATA4 = 0;
     TRISBbits.TRISB4 = 1;
 
     __builtin_enable_interrupts();
@@ -57,20 +58,19 @@ int main() {
     while (1) {
         // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
         // remember the core timer runs at half the sysclk
-        LATAbits.LATA4 = 0;
-        /*while (PORTBbits.RB4 == 0){
-            LATAbits.LATA4 = 1;
-            _CP0_SET_COUNT(0);
-            LATAbits.LATA4 = 1;
-            if (_CP0_GET_COUNT() == 12000000){
-                LATAbits.LATA4 = 0;   
+        if (PORTBbits.RB4 == 0){
+            _CP0_SET_COUNT(0); 
+            while (_CP0_GET_COUNT() < 6000000){
+                LATAbits.LATA4 = 1;
             }
-            if (_CP0_GET_COUNT() == 24000000){
-                LATAbits.LATA4 = 1;   
-            } 
-            if (_CP0_GET_COUNT() == 36000000){
+            while ((_CP0_GET_COUNT() < 12000000) && (_CP0_GET_COUNT() > 6000000)){
                 LATAbits.LATA4 = 0;
             }
-        }*/
+            while ((_CP0_GET_COUNT() < 18000000) && (_CP0_GET_COUNT() > 12000000)){
+                LATAbits.LATA4 = 1;
+            }
+            
+        }
+        LATAbits.LATA4 = 0;
     }
 }
