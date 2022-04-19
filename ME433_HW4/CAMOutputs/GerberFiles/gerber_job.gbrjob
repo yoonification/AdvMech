@@ -1,0 +1,24 @@
+{
+    "Header": {
+        "Comment": "All values are metric (mm)",
+        "CreationDate": "2022-04-19T06:50:50Z",
+        "GenerationSoftware": {
+            "Application": "EAGLE",
+            "Vendor": "Autodesk",
+            "Version": "9.6.2"
+        },
+        "Part": "Single"
+    },
+    "Overall": {
+        "BoardThickness": 1.57,
+        "LayerNumber": 2,
+        "Name": {
+            "ProjectId": "ME433_schematic"
+        },
+        "Owner": "Yoon Sung Kim <yoonsung68@gmail.com>",
+        "Size": {
+            "X": 50,
+            "Y": 50
+        }
+    }
+}
