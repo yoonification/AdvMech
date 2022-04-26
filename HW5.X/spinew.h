@@ -1,7 +1,7 @@
-#ifndef SPI__H__
-#define SPI__H__
+#ifndef SPINEW__H__
+#define SPINEW__H__
 
 void initSPI();
 unsigned char spi_io(unsigned char o);
 
-#endif // SPI__H__
+#endif // SPINEW__H__
