@@ -92,28 +92,24 @@ int main() {
     __builtin_enable_interrupts();
 
     while (1) {
-        blink();
         // Write to IODIR
+        
         setPin(W_add,0x00,IODIR);
         // Write to OLAT
         setPin(W_add,0x0A,0);
+        
         while (readPin(W_add,R_add,0x09) == 0) {
             setPin(W_add,0x0A,0b10000000);
         }
+        blink();
     }
 }
 void blink() {
     _CP0_SET_COUNT(0); 
-    while (_CP0_GET_COUNT() < 6000000){
+    while (_CP0_GET_COUNT() < 1000000){
         LATAbits.LATA4 = 1;
     }
-    while ((_CP0_GET_COUNT() < 12000000) && (_CP0_GET_COUNT() > 6000000)){
-        LATAbits.LATA4 = 0;
-    }
-    while ((_CP0_GET_COUNT() < 18000000) && (_CP0_GET_COUNT() > 12000000)){
-        LATAbits.LATA4 = 1;
-    }
-    while ((_CP0_GET_COUNT() < 24000000) && (_CP0_GET_COUNT() > 18000000)){
+    while ((_CP0_GET_COUNT() < 2000000) && (_CP0_GET_COUNT() > 1000000)){
         LATAbits.LATA4 = 0;
     }
 }
