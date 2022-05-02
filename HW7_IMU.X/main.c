@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include <math.h>
+
 #include "i2c_master_noint.h"
 #include "mpu6050.h"
 
@@ -38,13 +40,22 @@
 #pragma config IOL1WAY = OFF // allow multiple reconfigurations
 
 #define PIC32_SYS_FREQ 48000000ul // 48 million Hz
-#define PIC32_DESIRED_BAUD 230400 // Baudrate for RS232
+#define PIC32_DESIRED_BAUD 115200 // Baudrate for RS232
+
+#define DT 0.01
+#define A 0.5
+
+
 
 void UART1_Startup(void);
 void ReadUART1(char * string, int maxLength);
 void WriteUART1(const char * string);
 
+void comp_filt(float pitch, float roll, float ax, float ay, float az, float gx, float gy);
+
 void blink();
+
+void delay();
 
 int main() {
 
@@ -70,8 +81,8 @@ int main() {
     TRISAbits.TRISA4 = 0;
     TRISBbits.TRISB4 = 1;
     
-    U1RXRbits.U1RXR = 0b0000; // Set A2 to U1RX
-    RPB3Rbits.RPB3R = 0b0001; // Set B3 to U1TX
+    U1RXRbits.U1RXR = 0b0001; // U1RX is B6
+    RPB7Rbits.RPB7R = 0b0001; // U1TX is B7
     
     UART1_Startup();
     
@@ -84,7 +95,7 @@ int main() {
     char m_out[200]; // char array for uart data going out
     int i;
     #define NUM_DATA_PNTS 300 // how many data points to collect at 100Hz
-    float ax[NUM_DATA_PNTS], ay[NUM_DATA_PNTS], az[NUM_DATA_PNTS], gx[NUM_DATA_PNTS], gy[NUM_DATA_PNTS], gz[NUM_DATA_PNTS], temp[NUM_DATA_PNTS];
+    float ax[NUM_DATA_PNTS], ay[NUM_DATA_PNTS], az[NUM_DATA_PNTS], gx[NUM_DATA_PNTS], gy[NUM_DATA_PNTS], gz[NUM_DATA_PNTS], temp[NUM_DATA_PNTS], pitch[NUM_DATA_PNTS], roll[NUM_DATA_PNTS];
     
     //sprintf(m_out,"MPU-6050 WHO_AM_I: %X\r\n",whoami());
     //WriteUART1(m_out);
@@ -108,23 +119,26 @@ int main() {
         for (i=0; i<NUM_DATA_PNTS; i++){
             _CP0_SET_COUNT(0);
             // read IMU
+            blink();
             burst_read_mpu6050(IMU_buf);
             ax[i] = conv_xXL(IMU_buf);
             ay[i] = conv_yXL(IMU_buf);
             az[i] = conv_zXL(IMU_buf);
             gx[i] = conv_xG(IMU_buf);
             gy[i] = conv_yG(IMU_buf);
-            gz[i] = conv_zG(IMU_buf);
-            temp[i] = conv_temp(IMU_buf);
+            
+            comp_filt(pitch[i], roll[i], ax[i], ay[i], az[i], gx[i], gy[i]);
+            
+            sprintf(m_out,"%d %f %f\r\n",NUM_DATA_PNTS-i,pitch[i],roll[i]);
+            WriteUART1(m_out);
             
             while(_CP0_GET_COUNT()<24000000/2/100){}
         }
-        
         // print data
-        for (i=0; i<NUM_DATA_PNTS; i++){
-            sprintf(m_out,"%d %f %f %f %f %f %f %f\r\n",NUM_DATA_PNTS-i,ax[i],ay[i],az[i],gx[i],gy[i],gz[i],temp[i]);
+        /*for (i=0; i<NUM_DATA_PNTS; i++){
+            sprintf(m_out,"%d %f %f\r\n",NUM_DATA_PNTS-i,*pitch,*roll);
             WriteUART1(m_out);
-        }
+        }*/
         
     }
 }
@@ -189,6 +203,17 @@ void UART1_Startup() {
   __builtin_enable_interrupts();
 }
 
+void comp_filt(float pitch, float roll, float ax, float ay, float az, float gx, float gy) {
+    float theta_xl = (180/M_PI)*atan2f(ax,az);
+    float phi_xl = (180/M_PI)*atan2f(ay,az);
+   
+    pitch += gx * DT;
+    pitch = A * theta_xl + (1-A) * pitch;
+    
+    roll += gy * DT;
+    roll = A * phi_xl + (1-A) * roll;
+}
+
 void blink(){
     LATAbits.LATA4 = 1;
     _CP0_SET_COUNT(0);
@@ -196,4 +221,8 @@ void blink(){
     LATAbits.LATA4 = 0;
     _CP0_SET_COUNT(0);
     while(_CP0_GET_COUNT()<24000000/2/20){}
+}
+
+void delay(){
+    _CP0_SET_COUNT(0);
 }
