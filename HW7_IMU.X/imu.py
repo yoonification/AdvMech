@@ -19,22 +19,22 @@ while read_samples > 1:
     data_text = str(data_read,'utf-8') # turn the bytes to a string
     data = [float(i) for i in data_text.split()] # turn the string into a list of floats
 
-    if(len(data)==8):
+    if(len(data)==3):
         read_samples = int(data[0]) # keep reading until this becomes 1
         pitch.append(data[1])
         roll.append(data[2])
 print('Data collection complete')
 # plot it
 import matplotlib.pyplot as plt 
-t = range(len(ax)) # time array
+t = range(len(pitch)) # time array
 plt.plot(t,pitch,'r*-')
-plt.ylabel('G value')
+plt.ylabel('Pitch')
 plt.xlabel('sample')
 plt.show()
 
-t = range(len(gx)) # time array
+t = range(len(roll)) # time array
 plt.plot(t,roll,'r*-')
-plt.ylabel('Omega value')
+plt.ylabel('Roll')
 plt.xlabel('sample')
 plt.show()
 

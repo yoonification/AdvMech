@@ -43,7 +43,7 @@
 #define PIC32_DESIRED_BAUD 115200 // Baudrate for RS232
 
 #define DT 0.01
-#define A 0.5
+#define A 0.8
 
 
 
@@ -51,7 +51,7 @@ void UART1_Startup(void);
 void ReadUART1(char * string, int maxLength);
 void WriteUART1(const char * string);
 
-void comp_filt(float pitch, float roll, float ax, float ay, float az, float gx, float gy);
+void comp_filt(int i, uint8_t* IMU_buf, float* pitch, float* roll, float* ax, float* ay, float* az, float* gx, float* gy);
 
 void blink();
 
@@ -97,6 +97,8 @@ int main() {
     #define NUM_DATA_PNTS 300 // how many data points to collect at 100Hz
     float ax[NUM_DATA_PNTS], ay[NUM_DATA_PNTS], az[NUM_DATA_PNTS], gx[NUM_DATA_PNTS], gy[NUM_DATA_PNTS], gz[NUM_DATA_PNTS], temp[NUM_DATA_PNTS], pitch[NUM_DATA_PNTS], roll[NUM_DATA_PNTS];
     
+    pitch[0] = 0.0;
+    roll[0] = 0.0;
     //sprintf(m_out,"MPU-6050 WHO_AM_I: %X\r\n",whoami());
     //WriteUART1(m_out);
     char who = whoami(); // ask if the imu is there
@@ -121,24 +123,18 @@ int main() {
             // read IMU
             blink();
             burst_read_mpu6050(IMU_buf);
-            ax[i] = conv_xXL(IMU_buf);
-            ay[i] = conv_yXL(IMU_buf);
-            az[i] = conv_zXL(IMU_buf);
-            gx[i] = conv_xG(IMU_buf);
-            gy[i] = conv_yG(IMU_buf);
             
-            comp_filt(pitch[i], roll[i], ax[i], ay[i], az[i], gx[i], gy[i]);
-            
-            sprintf(m_out,"%d %f %f\r\n",NUM_DATA_PNTS-i,pitch[i],roll[i]);
-            WriteUART1(m_out);
+            comp_filt(i, IMU_buf, pitch, roll, ax, ay, az, gx, gy);
+            //sprintf(m_out,"%d %f %f\r\n",NUM_DATA_PNTS-i,pitch[i],roll[i]);
+            //WriteUART1(m_out);
             
             while(_CP0_GET_COUNT()<24000000/2/100){}
         }
         // print data
-        /*for (i=0; i<NUM_DATA_PNTS; i++){
-            sprintf(m_out,"%d %f %f\r\n",NUM_DATA_PNTS-i,*pitch,*roll);
+        for (i=1; i<NUM_DATA_PNTS; i++){
+            sprintf(m_out,"%d %f %f\r\n",NUM_DATA_PNTS-i,pitch[i],roll[i]);
             WriteUART1(m_out);
-        }*/
+        }
         
     }
 }
@@ -203,15 +199,21 @@ void UART1_Startup() {
   __builtin_enable_interrupts();
 }
 
-void comp_filt(float pitch, float roll, float ax, float ay, float az, float gx, float gy) {
-    float theta_xl = (180/M_PI)*atan2f(ax,az);
-    float phi_xl = (180/M_PI)*atan2f(ay,az);
-   
-    pitch += gx * DT;
-    pitch = A * theta_xl + (1-A) * pitch;
+void comp_filt(int i, uint8_t* IMU_buf, float* pitch, float* roll, float* ax, float* ay, float* az, float* gx, float* gy) {
+    ax[i] = conv_xXL(IMU_buf);
+    ay[i] = conv_yXL(IMU_buf);
+    az[i] = conv_zXL(IMU_buf);
+    gx[i] = conv_xG(IMU_buf);
+    gy[i] = conv_yG(IMU_buf);
     
-    roll += gy * DT;
-    roll = A * phi_xl + (1-A) * roll;
+    float theta_xl = (180.0/M_PI)*atan2f(ax[i],az[i]);
+    float phi_xl = (180.0/M_PI)*atan2f(ay[i],az[i]);
+   
+    pitch[i] += gx[i] * DT;
+    pitch[i] = A * theta_xl + (1-A) * pitch[i];
+    
+    roll[i] += gy[i] * DT;
+    roll[i] = A * phi_xl + (1-A) * roll[i];
 }
 
 void blink(){
@@ -221,8 +223,4 @@ void blink(){
     LATAbits.LATA4 = 0;
     _CP0_SET_COUNT(0);
     while(_CP0_GET_COUNT()<24000000/2/20){}
-}
-
-void delay(){
-    _CP0_SET_COUNT(0);
 }
