@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=main.c ssd1306.c
+SOURCEFILES_QUOTED_IF_SPACED=main.c ssd1306.c i2c_master_noint.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.o ${OBJECTDIR}/ssd1306.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/main.o.d ${OBJECTDIR}/ssd1306.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.o ${OBJECTDIR}/ssd1306.o ${OBJECTDIR}/i2c_master_noint.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/main.o.d ${OBJECTDIR}/ssd1306.o.d ${OBJECTDIR}/i2c_master_noint.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/main.o ${OBJECTDIR}/ssd1306.o
+OBJECTFILES=${OBJECTDIR}/main.o ${OBJECTDIR}/ssd1306.o ${OBJECTDIR}/i2c_master_noint.o
 
 # Source Files
-SOURCEFILES=main.c ssd1306.c
+SOURCEFILES=main.c ssd1306.c i2c_master_noint.c
 
 
 
@@ -119,6 +119,12 @@ ${OBJECTDIR}/ssd1306.o: ssd1306.c  .generated_files/flags/default/d88810e2cb4e64
 	@${RM} ${OBJECTDIR}/ssd1306.o 
 	${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG   -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -fno-common -MP -MMD -MF "${OBJECTDIR}/ssd1306.o.d" -o ${OBJECTDIR}/ssd1306.o ssd1306.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -mdfp="${DFP_DIR}"  
 	
+${OBJECTDIR}/i2c_master_noint.o: i2c_master_noint.c  .generated_files/flags/default/2da858108865ee84392666770a3637e738a481fb .generated_files/flags/default/af031a62ccc0c18b099f063c5edfd8e7f9b606f2
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/i2c_master_noint.o.d 
+	@${RM} ${OBJECTDIR}/i2c_master_noint.o 
+	${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG   -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -fno-common -MP -MMD -MF "${OBJECTDIR}/i2c_master_noint.o.d" -o ${OBJECTDIR}/i2c_master_noint.o i2c_master_noint.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -mdfp="${DFP_DIR}"  
+	
 else
 ${OBJECTDIR}/main.o: main.c  .generated_files/flags/default/74af258f4a0f9a985cbc6d6b592d2d9fe8cc419d .generated_files/flags/default/af031a62ccc0c18b099f063c5edfd8e7f9b606f2
 	@${MKDIR} "${OBJECTDIR}" 
@@ -131,6 +137,12 @@ ${OBJECTDIR}/ssd1306.o: ssd1306.c  .generated_files/flags/default/c20b703bd76736
 	@${RM} ${OBJECTDIR}/ssd1306.o.d 
 	@${RM} ${OBJECTDIR}/ssd1306.o 
 	${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -fno-common -MP -MMD -MF "${OBJECTDIR}/ssd1306.o.d" -o ${OBJECTDIR}/ssd1306.o ssd1306.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -mdfp="${DFP_DIR}"  
+	
+${OBJECTDIR}/i2c_master_noint.o: i2c_master_noint.c  .generated_files/flags/default/d23c1e517c4086cfd4d7a7275ecc5814507f55e9 .generated_files/flags/default/af031a62ccc0c18b099f063c5edfd8e7f9b606f2
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/i2c_master_noint.o.d 
+	@${RM} ${OBJECTDIR}/i2c_master_noint.o 
+	${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -fno-common -MP -MMD -MF "${OBJECTDIR}/i2c_master_noint.o.d" -o ${OBJECTDIR}/i2c_master_noint.o i2c_master_noint.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -mdfp="${DFP_DIR}"  
 	
 endif
 

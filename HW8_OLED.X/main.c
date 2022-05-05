@@ -1,9 +1,12 @@
 #include<xc.h>           // processor SFR definitions
 #include<sys/attribs.h>  // __ISR macro
 
-#include<stdio.h>
-#include<math.h>
-#include"spinew.h"
+#include <stdio.h>
+
+#include <math.h>
+
+#include "i2c_master_noint.h"
+#include "ssd1306.h"
 
 // DEVCFG0
 #pragma config DEBUG = OFF // disable debugging
@@ -26,26 +29,44 @@
 #pragma config FWDTEN = OFF // wdt disabled
 #pragma config FWDTWINSZ = WINSZ_25 // wdt window at 25%
 
-// DEVCFG2 - get the sysclk. clock to 48MHz from the 8MHz fast rc internal oscillator
+// DEVCFG2 - get the sysclk clock to 48MHz from the 8MHz fast rc internal oscillator
 #pragma config FPLLIDIV = DIV_2 // divide input clock to be in range 4-5MHz
 #pragma config FPLLMUL = MUL_24 // multiply clock after FPLLIDIV
-#pragma config FPLLODIV = DIV_4 // divide clock after FPLLMUL to get 48MHz
+#pragma config FPLLODIV = DIV_2 // divide clock after FPLLMUL to get 48MHz
 
 // DEVCFG3
-#pragma config USERID = 0x1234 // some 16bit userid, doesn't matter what
+#pragma config USERID = 0 // some 16bit userid, doesn't matter what
 #pragma config PMDL1WAY = OFF // allow multiple reconfigurations
 #pragma config IOL1WAY = OFF // allow multiple reconfigurations
 
-void blink();
+#define PIC32_SYS_FREQ 48000000ul // 48 million Hz
+#define PIC32_DESIRED_BAUD 115200 // Baudrate for RS232
+
+#define DT 0.01
+#define A 0.8
+
+
+
+void UART1_Startup(void);
 void ReadUART1(char * string, int maxLength);
 void WriteUART1(const char * string);
-unsigned short make16(char a, unsigned char v);
+
+
+void blink();
+void blink_pixel();
+
+void delay();
 
 int main() {
+
+    // set up i2c, then ssd1306
+    i2c_master_setup();
+    ssd1306_setup();
+    char m[50];
+    int i = 0;
     
-    initSPI();
     __builtin_disable_interrupts(); // disable interrupts while initializing things
-    
+
     // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
     __builtin_mtc0(_CP0_CONFIG, _CP0_CONFIG_SELECT, 0xa4210583);
 
@@ -60,94 +81,43 @@ int main() {
 
     // do your TRIS and LAT commands here
     TRISAbits.TRISA4 = 0;
+    TRISBbits.TRISB4 = 1;
     LATAbits.LATA4 = 0;
+    
+    TRISAbits.TRISA4 = 0;
     TRISBbits.TRISB4 = 1;
     
-    // B6 and B7 are UART Pins
+    U1RXRbits.U1RXR = 0b0001; // U1RX is B6
+    RPB7Rbits.RPB7R = 0b0001; // U1TX is B7
     
-    //U1RXRbits.U1RXR = 0b0001; // U1RX is B6
-    //RPB7Rbits.RPB7R = 0b0001; // U1TX is B7
+    UART1_Startup();
     
-    // turn on UART1 without an interrupt
-    //U1MODEbits.BRGH = 0; // set baud 230400
-    //U1BRG = ((48000000 / 230400) / 16) - 1;
-
-    // 8 bit, no parity bit, and 1 stop bit (8N1 setup)
-    //U1MODEbits.PDSEL = 0;
-    //U1MODEbits.STSEL = 0;
-
-    // configure TX & RX pins as output & input pins
-    //U1STAbits.UTXEN = 1;
-    //U1STAbits.URXEN = 1;
-
-    // enable the uart
-    //U1MODEbits.ON = 1;
-    unsigned int sine;
-    unsigned int tri;
-    unsigned short q;
-    unsigned short r;
     __builtin_enable_interrupts();
-
+    // while loop
     while (1) {
+        //blink();
         _CP0_SET_COUNT(0);
-        // pick the voltage for sine and tri waves, an unsigned 8 bit number
-        
-        while (_CP0_GET_COUNT() < 12000000) {
-            //send the sine wave by:
-            // make cs low
-            LATBbits.LATB3 = 0;
-            sine = 127 + 127*sin(2*M_PI*2*_CP0_GET_COUNT()/12000000);
-            // turn the voltage into an unsigned 16 bit number
-            q = make16(1,sine);
-            // send 8 bits
-            spi_io(q>>8);
-            // send 8 bits
-            spi_io(q&0xff);
-            // make cs high
-            LATBbits.LATB3 = 1;
-            
-            LATBbits.LATB3 = 0;
-            if (_CP0_GET_COUNT() <= 6000000) {
-                tri = 255 *_CP0_GET_COUNT()/6000000;
-            }
-            else {
-                tri = 255 - 255 * (_CP0_GET_COUNT()-6000000)/6000000;
-            }
-            // turn the voltage into an unsigned 16 bit number
-            r = make16(0,tri);
-            // send 8 bits
-            spi_io(r>>8);
-            // send 8 bits
-            spi_io(r&0xff);
-            LATBbits.LATB3 = 1;
-        }
-    }
-}
-void blink() {
-    if (PORTBbits.RB4 == 0){
-        _CP0_SET_COUNT(0); 
-        while (_CP0_GET_COUNT() < 12000000){
+        while (_CP0_GET_COUNT() < 1000000){
             LATAbits.LATA4 = 1;
         }
-        while ((_CP0_GET_COUNT() < 24000000) && (_CP0_GET_COUNT() > 12000000)){
+        while ((_CP0_GET_COUNT() < 2000000) && (_CP0_GET_COUNT() > 1000000)){
             LATAbits.LATA4 = 0;
         }
-        while ((_CP0_GET_COUNT() < 36000000) && (_CP0_GET_COUNT() > 24000000)){
-            LATAbits.LATA4 = 1;
-        }
-    LATAbits.LATA4 = 0;
-    }
+        sprintf(m,"Counter = %d",i);
+        i++;
+        ssd1306_drawString(m,6,6);
+        ssd1306_update();
+        sprintf(m,"FPS = %d",24000000/_CP0_GET_COUNT());
+        ssd1306_drawString(m,6,22);
+        ssd1306_update();
+        
+    }     
 }
 
-unsigned short make16(char a_or_b, unsigned char v) {
-    unsigned short s = 0;
-    s = (a_or_b << 15);
-    s |= (0b111 << 12);
-    s |= (v << 4);
-    return s;
-}
-
-/*void ReadUART1(char * message, int maxLength) {
+// Read from UART1
+// block other functions until you get a '\r' or '\n'
+// send the pointer to your char array and the number of elements in the array
+void ReadUART1(char * message, int maxLength) {
   char data = 0;
   int complete = 0, num_bytes = 0;
   // loop until you get a '\r' or '\n'
@@ -170,7 +140,7 @@ unsigned short make16(char a_or_b, unsigned char v) {
   message[num_bytes] = '\0';
 }
 
-// Write a character array using UART3
+// Write a character array using UART1
 void WriteUART1(const char * string) {
   while (*string != '\0') {
     while (U1STAbits.UTXBF) {
@@ -179,4 +149,50 @@ void WriteUART1(const char * string) {
     U1TXREG = *string;
     ++string;
   }
-}*/
+}
+
+
+void UART1_Startup() {
+  // disable interrupts
+  __builtin_disable_interrupts();
+
+  // turn on UART1 without an interrupt
+  U1MODEbits.BRGH = 0; // set baud to PIC32_DESIRED_BAUD
+  U1BRG = ((PIC32_SYS_FREQ / PIC32_DESIRED_BAUD) / 16) - 1;
+
+  // 8 bit, no parity bit, and 1 stop bit (8N1 setup)
+  U1MODEbits.PDSEL = 0;
+  U1MODEbits.STSEL = 0;
+
+  // configure TX & RX pins as output & input pins
+  U1STAbits.UTXEN = 1;
+  U1STAbits.URXEN = 1;
+
+  // enable the uart
+  U1MODEbits.ON = 1;
+
+  __builtin_enable_interrupts();
+}
+
+void blink(){
+    LATAbits.LATA4 = 1;
+    _CP0_SET_COUNT(0);
+    while(_CP0_GET_COUNT()<24000000/2/20){}
+    LATAbits.LATA4 = 0;
+    _CP0_SET_COUNT(0);
+    while(_CP0_GET_COUNT()<24000000/2/20){}
+}
+
+
+void blink_pixel(){
+    ssd1306_drawPixel(10,10,1);
+    ssd1306_update();
+    LATAbits.LATA4 = 1;
+    _CP0_SET_COUNT(0);
+    while(_CP0_GET_COUNT()<24000000/2){}
+    ssd1306_clear();
+    ssd1306_update();
+    LATAbits.LATA4 = 0;
+    _CP0_SET_COUNT(0);
+    while(_CP0_GET_COUNT()<24000000/2){}
+}
