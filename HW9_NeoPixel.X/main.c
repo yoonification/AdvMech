@@ -41,8 +41,7 @@
 #define PIC32_SYS_FREQ 48000000ul // 48 million Hz
 #define PIC32_DESIRED_BAUD 115200 // Baudrate for RS232
 
-#define DT 0.01
-#define A 0.8
+#define numLEDs 4
 
 
 
@@ -84,10 +83,20 @@ int main() {
     // set up ws2812b
     ws2812b_setup();
     // while loop
+    wsColor color[numLEDs];
+    int i;
+    int phase = 0;
+    
     while (1) {
         blink();
-        wsColor color = HSBtoRGB(200.00,0.5,1.00);
-        ws2812b_setColor(&color,1);
+        
+        for (i=0; i<numLEDs; i++){
+            color[i] = HSBtoRGB((phase + 90*i) % 360, 1, 0.2);
+            phase+=20;
+            ws2812b_setColor(color, numLEDs);
+        }
+            while(_CP0_GET_COUNT()<6000000){}
+
     }     
 }
 
