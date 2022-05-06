@@ -43,8 +43,6 @@
 
 #define numLEDs 4
 
-
-
 void UART1_Startup(void);
 void ReadUART1(char * string, int maxLength);
 void WriteUART1(const char * string);
@@ -88,15 +86,13 @@ int main() {
     int phase = 0;
     
     while (1) {
-        blink();
-        
+        _CP0_SET_COUNT(0);
         for (i=0; i<numLEDs; i++){
             color[i] = HSBtoRGB((phase + 90*i) % 360, 1, 0.2);
-            phase+=20;
             ws2812b_setColor(color, numLEDs);
+            phase++;
         }
-            while(_CP0_GET_COUNT()<6000000){}
-
+        while(_CP0_GET_COUNT()<360000){}
     }     
 }
 
