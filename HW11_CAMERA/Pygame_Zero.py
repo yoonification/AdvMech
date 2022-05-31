@@ -19,7 +19,7 @@ ser.write(('\n').encode())
 
 def draw():
     ind = 0
-    for y in range(0,29,1):
+    for y in [7,14,21]:
         ind = ind + 1 # fudge
         for x in range(0,39,1):
             BOX = Rect((x*10, y*10), (10, 10))
