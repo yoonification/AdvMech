@@ -19,7 +19,7 @@ ser.write(('\n').encode())
 
 def draw():
     ind = 0
-    for y in [7,14,21]:
+    for y in range(0,29,1):
         ind = ind + 1 # fudge
         for x in range(0,39,1):
             BOX = Rect((x*10, y*10), (10, 10))
@@ -28,15 +28,16 @@ def draw():
             ind = ind + 1
 
 def update():
-    data_read = ser.readline() # read a line into a bytearray
-    data_text = str(data_read,'utf-8') # turn the line into a string
-    data = list(map(int,data_text.split())) # turn the string into a list of ints
+    while ser.in_waiting:
+        data_read = ser.readline() # read a line into a bytearray
+        data_text = str(data_read,'utf-8') # turn the line into a string
+        data = list(map(int,data_text.split())) # turn the string into a list of ints
 
-    if(len(data)==4):
-        red[data[0]] = data[1]
-        green[data[0]] = data[2]
-        blue[data[0]] = data[3]
-        #print(data[0])
-        # after you get an image, ask for another
-        if data[0] == 1199:
-            ser.write(('\n').encode())
+        if(len(data)==4):
+            red[data[0]] = data[1]
+            green[data[0]] = data[2]
+            blue[data[0]] = data[3]
+            #print(data[0])
+            # after you get an image, ask for another
+            if data[0] == 1199:
+                ser.write(('\n').encode())

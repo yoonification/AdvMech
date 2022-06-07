@@ -102,5 +102,16 @@ while True:
         ind=ind+1
 
     # send the color data as index red green blue
-    for c in range(red.size):
-        print(str(c)+" "+str(int(red[c]))+" "+str(int(green[c]))+" "+str(int(blue[c])))
+	string_write = ""
+	num = 0
+    for c in (list(range(240,280)) + list(range(520,560)) + list(range(800,840))):
+        string_write = string_write + str(c)+" "+str(int(red[c]))+" "+str(int(green[c]))+" "+str(int(blue[c]))
+        num = num+1
+        if num < 20:
+            string_write = string_write+"\n"
+        if num == 20:
+            print(string_write)
+            string_write = ""
+            num = 0
+    if len(string_write) != 0:
+        print(string_write)
